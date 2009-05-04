@@ -1,0 +1,58 @@
+=== Progetto Reti Laboratorio 2009 ===
+
+Il progetto consiste nell'implementare un sistema di gestione delle prenotazioni di una pizzeria/ristorante.
+Si tratta di un sistema client-server nel quale sono presenti le seguenti entità:
+
+* Client -> Cameriere (n processi)
+E' colui che effettua le prenotazioni delle vivande e dovrà comunicare con la cucina (server) per aggiornare l'elenco delle prenotazioni di un determinato tavolo identificato attraverso un codice nel formato da decidere.
+Ha anche il compito di comunicare con il server della cassa per preparare i conti per un dato tavolo.
+
+- n istanze cameriere
+	# Ci possono essere n processi (quindi n camerieri) che comunicano con un singolo server cucina
+	# Ad ogni cameriere verrà assegnato un numero dell'ordine 
+	# Il server risponderà con una stima del tempo di attesa per l'ordine appena fatto (opzionale)
+	# Il cameriere riceverà una notifica di avvenuta evasione per ogni ordine
+		* il server manderà al client un messaggio con numero ordine e numero tavolo
+	# Il cameriere deve aver la possibilità di vedere gli ordini in coda e la stima del tempo mancante all'evasione
+	# Possibilità di modifica di una prenotazione esistente e non ancora evasa
+	  
+* Server -> Cucina (1 processo)
+E' colui che riceve gli ordini dai camerieri e ne gestisce la priorità. Dovrà quindi gestire una cosa di ordini e le loro stime del tempo di evasione.
+Ogni ordine verrà identificato da un numero generato dal processo server, dal numero del tavolo e dal codice del cameriere.
+
+- 1 istanza server cucina
+	# Ogni ordine ha una stima del tempo di evasione che verrà comunicata al cameriere
+		* la stima comunicata è il tempo totale degli ordini in coda + il tempo dell'ordine appena ricevuto
+	# Il server ha una lista dei piatti disponibili e delle relative stime 
+	# Il server implementerà un sistema di notifiche ai camerieri per segnalare gli ordini evasi
+	# Rispondere alle richieste della Cassa mandandogli la lista di tutti i piatti per l'ordine richiesto
+
+* Server -> Pizza (1 processo)
+Identico al server cucina ma gestisce gli ordini delle pizze.
+
+Client -> Cucina (1 processo) 
+E' colui che segnala al server i piatti in fase di preparazione e gli ordini evasi.  
+
+- 1 istanza client cucina 
+	# Lo chef comunica l'evasione di ogni ordine al server cucina che a sua volta andrà a notificarlo al cameriere
+	
+Client -> Pizza (1 processo) 
+Identico al server pizzeria ma gestisce le evasioni delle pizze. 
+
+Server -> Cassa (1 processo)
+E' colui che ha il compito di gestire i conti per ogni tavolo. Riceve le richieste dai camerieri e va ad interrogare il server cucina e il server pizza per il fetching degli ordini per il tavolo specificato dal cameriere.
+
+- 1 istanza server cassa
+	# Una volta ricevuti gli ordini e calcolato il conto notifica il cameriere 
+
+Processo di richiesta conto: 	
+-- Cameriere -> Cassa (server) -> Cucina (server) ->  Cassa (client) 
+Il cameriere manda un richiesta di preparazione del conto per un certo tavolo, identificato dal suo numero, alla cassa (server). Quest'ultima manda una richiesta al server della cucina per ricevere l'ordine fatto dal tavolo e una volta ricevuta ne calcola il prezzo totale. 
+Idee varie e opzionali:
+
+- assegnazione di una stima del tempo di preparazione per ogni piatto
+- Il server tiene traccia della stima del tempo totale per l'evasione degli ordini in coda
+- Ad ogni nuova prenotazione del cameriere k, il server cucina gli restituisce la stima del tempo necessario per evadere l'ordine ricevuto
+	# stima tempo totale evasione ordini in coda + stima tempo evasione ordine appena ricevuto
+- autenticazione sicura tra il client cameriere e il server cucina.
+- Possilità di ordinare una pizza non presente nel menu, specificando gli ingredienti che il cliente desidera
