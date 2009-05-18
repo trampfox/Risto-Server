@@ -1,6 +1,6 @@
-PROGS = error.o my_io.o my_signal.o wrapper.o function.o trisClient trisServer 
+PROGS = error.o my_io.o my_signal.o wrapper.o function.o users.o trisClient trisServer 
 CC = gcc -g
-CLEANFILES = error.o my_io.o my_signal.o wrapper.o function.o trisServer.o trisClient.o
+CLEANFILES = error.o my_io.o my_signal.o wrapper.o function.o trisServer.o trisClient.o users.o
 
 
 all: ${PROGS}
@@ -19,6 +19,9 @@ wrapper.o: lib/wrapper.c
 
 function.o: function.c
 	${CC} -c function.c
+
+users.o: users.c
+	${CC} -c users.c
 
 trisClient: trisClient.o error.o my_io.o wrapper.o function.o
 	${CC} -o $@ $^

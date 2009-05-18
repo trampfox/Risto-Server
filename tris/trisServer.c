@@ -1,5 +1,5 @@
 #include "lib/basic.h"
-
+#include "users.h"
 void sigHandler(int segnale)
 {
 	int status;
@@ -12,13 +12,21 @@ void sigHandler(int segnale)
 
 main(int argc, char **argv)
 {
-  int sockfd, connfd, listenfd, i, maxi, maxd; /*confd memorizza descrittore della accept */
+  int sockfd, connfd, listenfd, i,r, maxi, maxd; /*confd memorizza descrittore della accept */
   int ready, client[FD_SETSIZE];
   char buff[MAXLINE];
   fd_set allset, rset;
   ssize_t n;
   socklen_t clilen;
-  
+
+  t_user utenti[FD_SETSIZE];
+  /*inizializza il vettore degli utenti*/
+  for (i=0;i<FD_SETSIZE;i++) {
+  	memset(utenti[i].nickname, '\0', MAXLINE);
+  	utenti[i].state = 0; /* state 0 -> user not present */
+		//strcpy(utenti[i].nickname,"NULL\0");
+	}
+
   struct sockaddr_in servaddr, cliaddr;      
   
   if (signal(SIGCHLD, sigHandler) == SIG_ERR)
@@ -86,11 +94,15 @@ main(int argc, char **argv)
 							err_sys("close error: ");
 						FD_CLR(sockfd, &allset);
 						client[i] = -1;
+						// gestione uscita
   				}
   				else {
   					printf("===\nricevuto %s da %s %d\n===\n",buff,inet_ntoa(cliaddr.sin_addr),ntohs(cliaddr.sin_port));
-  					messagemng(buff);
-  					n = Write(sockfd, buff, strlen(buff));
+						printf("\ncall messagemng buff:%s\n", buff);
+  					r = messagemng(buff, utenti, client[i]);
+						memset(buff, 0, strlen(buff));
+					
+  					//n = Write(sockfd, buff, strlen(buff));
   				}
   			}
   		}		
