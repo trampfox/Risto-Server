@@ -16,11 +16,14 @@
 #define USNO					       10
 /* Error code
 
+** USOK code
 ** 110 -> start the game
 ** 220 -> wait the first push
+
+** ERRR code
 ** 330 -> request play against himself  
 ** 440 -> nickname already exixts
-** 550 -> request user id doesn't exixt
+** 550 -> request user id doesn't exit
 */
 /* funzioni principali per il gioco del tris
  * Parte di autenticazione
@@ -211,7 +214,7 @@ int agreeRqst (int sockfd, int opponent )
 	char message [MAXLINE];
 	memset(message, '\0', MAXLINE);
 	char decision[MAXLINE];
-	printf("Player %d would play with you, agree? y/n\n", opponent);
+	printf("Player %d would like to play with you, agree? y/n\n", opponent);
 	fgetsn(decision);
 	while ( (decision[0]!='y') && (decision[0]!='n') )
 	{

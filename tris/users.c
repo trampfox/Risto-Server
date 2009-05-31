@@ -108,7 +108,9 @@ int starterUser(int a, int b)
 
 
 
-/* passo ai relativi client il loro avversario */ 
+/* passo ai relativi client il loro avversario 
+** sockfd: avversario
+** me: socket descriptor di chi richiama la funzione */ 
 int userConfirm (t_user *players, int sockfd, int me)
 {
 	char message [MAXLINE];
