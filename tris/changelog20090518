@@ -1,0 +1,39 @@
+Changelog
+
+= Function.c =
+
+* aggiunta funzione selectPlayer usata per la scelta dell'avversario (controllo se l'avversario
+	esiste con la funzione controlUser)
+	#selectPlayer
+	l'utente sceglie in giocatore attraverso il suo ID (int) e invia un messaggio al 
+	server che viene memorizzato in message.
+	formato stringa = "RUSR <ID> NULL NULL"
+* scoperto "bug" in split_string, da controllare
+* aggiunto 
+	#define USOK						9				/* user choice ok */
+	copme risposta da parte del server dopo una richiesta di un giocatore tramite suo ID
+
+= users.c =
+
+* implementata la preparazione e l'invio della lista dei giocatori
+	# prepareList
+		scorre la lista di tutti i giocatori (utenti) e inserisce nella stringa message
+		il messaggio da inviare al client con la lista completa dei giocatori con campo state = FREE
+		formato stringa = "RLIS lista"
+		Da vedere: 
+		- con tanti giocatori la stringa può superare il numero massimo di caratteri
+* non ho utilizzato userToString. meglio utilizzarla? 
+* Implementata controllo richiesta avversario
+	#controlUser
+	controlla se l'avversario scelto esiste. Controlla se l'id è presente nella lista degli 
+	utenti registrati e risponde con 2 tipi di risposte
+	"USOK NULL NULL NULL" -> l'avversario richiesto esiste
+	"ERRR <err_msg> NULL NULL" -> l'avversario richiesto non esiste
+	
+
+Inseriamo dei codici di errore? (come ad esempio ho fatto per utente già esistente o richiesta user id non esistente)
+Io ho iniziato ad usare questi:
+/* Error code
+** 330 -> request play against himself  
+** 440 -> nickname already exixts
+** 550 -> request user id doesn't exixt

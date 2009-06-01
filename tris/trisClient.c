@@ -8,9 +8,21 @@ void write_log(int status)
 }
 
 
+void close_prog(int status)
+{
+	printf("Programma Terminato\n");
+	exit(EXIT_SUCCESS);
+}
+
+
+
 main(int argc, char *argv[])
 {
   int sockfd, n, num, maxfd, r, ntout;
+<<<<<<< HEAD:tris/trisClient.c
+=======
+  int *matrice[3];
+>>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/trisClient.c
   struct sockaddr_in servaddr;
   char buff[MAXLINE], str[MAXLINE], rcv[MAXLINE];
   struct hostent *he;
@@ -24,6 +36,11 @@ main(int argc, char *argv[])
   /* controllo se la signal va a buon fine */
   if(signal(SIGPIPE, write_log) == SIG_ERR) {
   	err_sys("signal SIGPIPE failed: ");
+  	exit(1);
+  }
+
+  if(signal(SIGINT, close_prog) == SIG_ERR) {
+  	err_sys("signal SIGINT failed: ");
   	exit(1);
   }
   
@@ -87,7 +104,11 @@ main(int argc, char *argv[])
 		if (FD_ISSET(sockfd, &rset)) {
 			n = Read(sockfd, rcv, MAXLINE-1);
 			/* gestione del messaggio */
+<<<<<<< HEAD:tris/trisClient.c
 			r = clientMessagemng(rcv, sockfd);						
+=======
+			r = clientMessagemng(rcv, matrice, sockfd);						
+>>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/trisClient.c
 			//printf("echo: %s\n", rcv);
 			//printf("Inserisci la stringa: ");
 			fflush(stdin);

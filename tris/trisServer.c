@@ -9,6 +9,13 @@ void sigHandler(int segnale)
 	return;
 }
 
+void close_prog(int status)
+{
+	printf("Programma Terminato\n");
+	exit(EXIT_SUCCESS);
+}
+
+
 
 main(int argc, char **argv)
 {
@@ -31,6 +38,11 @@ main(int argc, char **argv)
   
   if (signal(SIGCHLD, sigHandler) == SIG_ERR)
   	err_sys("signal SIGCHLD error: ");
+
+  if(signal(SIGINT, close_prog) == SIG_ERR) {
+  	err_sys("signal SIGINT failed: ");
+  	exit(1);
+  }
 
   if ( (listenfd = socket(AF_INET, SOCK_STREAM,0)) < 0 ) /* apro socket TCP */
     err_sys("socket error");
