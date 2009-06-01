@@ -22,7 +22,7 @@ main(int argc, char **argv)
   int sockfd, connfd, listenfd, i,r, maxi, maxd; /*confd memorizza descrittore della accept */
   int ready, client[FD_SETSIZE];
   char buff[MAXLINE];
-  int* matrix[3];
+  int serverMatrix[3][3];
   fd_set allset, rset;
   ssize_t n;
   socklen_t clilen;
@@ -112,7 +112,7 @@ main(int argc, char **argv)
   				else {
   					printf("===\nricevuto %s da %s %d\n===\n",buff,inet_ntoa(cliaddr.sin_addr),ntohs(cliaddr.sin_port));
 						printf("\ncall messagemng buff:%s\n", buff);
-  					r = messagemng(buff, utenti, matrix, client[i]);
+  					r = messagemng(buff, utenti, serverMatrix, client[i]);
 						memset(buff, 0, strlen(buff));
 					
   					//n = Write(sockfd, buff, strlen(buff));

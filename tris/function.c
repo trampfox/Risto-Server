@@ -61,6 +61,8 @@ int parseMessage(char *buff, char **param)
 		if (strcmp(param[0], "USOK") == 0) return USOK;
 		if (strcmp(param[0], "QUIT") == 0) return QUIT;
 		if (strcmp(param[0], "PUSH") == 0) return PUSH;
+		if (strcmp(param[0], "MVOK") == 0) return MVOK;
+		if (strcmp(param[0], "MVER") == 0) return MVER;
 	}
 	else 
 		return -1;
@@ -91,22 +93,40 @@ int serverAuth( int sockfd, int ret )
 
 /* initialize a copy of game matrix on server used to control the player's shoots
 ** matrix: game matrix */
-int initGameMatrix(int *matrix[])
+int initGameMatrix(int matrix[3][3])
 {
-	int row1[]={0,0,0};
- 	int row2[]={0,0,0};
- 	int row3[]={0,0,0};
-	matrix[0]=row1;
- 	matrix[1]=row2;
- 	matrix[2]=row3;
+	int i, j;
+	for (i=0;i<3;i++)
+		for (j=0;j<3;j++)
+			matrix[i][j] = 0;
  	printf("Game matrix\n");
 	t_status (matrix);
 	return 1;
 }
 
+int controlMove(int matrix[3][3], t_user* players, int y, int x, int player_id)
+{
+	char message[MAXLINE];
+	memset(message, '\0', MAXLINE);
+	printf("control move: y:%d, x:%d, player_id:%d\n", y, x, player_id);
+	if ((matrix[x][y] != 0)) {
+		/* wrong move */
+		snprintf(message, sizeof(message), "MVER %d %d NULL\r\n", y, x);
+		Write(player_id, message, strlen(message));
+	}
+	else /* good move */
+		/* send MVOK to the the that send a PUSH message */
+		snprintf(message, sizeof(message), "MVOK %d %d NULL\r\n", y, x);
+		Write(player_id, message, strlen(message));
+		/* send a PUSH message with the new move */
+		memset(message, '\0', MAXLINE);
+		snprintf(message, sizeof(message), "PUSH %d %d %d\r\n", y, x, player_id);
+		Write(players[player_id].opp, message, strlen(message));
+}
+
 /* Server message management
  * sockfd: client socket descriptor that has sent the message */
-int messagemng(char* buff, t_user* players, int *matrix[], int sockfd)
+int messagemng(char* buff, t_user* players, int matrix[3][3], int sockfd)
 {
 	int n,k;
 	char* param [10];
@@ -134,7 +154,11 @@ int messagemng(char* buff, t_user* players, int *matrix[], int sockfd)
 				controlUser(players, sockfd, param[1]);
 			break;
 			case PUSH:
-				sendCoord(sockfd, players[sockfd].opp, atoi(param[1]), atoi(param[2]));
+				printf("PUSH case\n");
+				/* control if the move is correct */
+				controlMove(matrix, players, atoi(param[1]), atoi(param[2]), sockfd);
+					//sendCoord(sockfd, players[sockfd].opp, atoi(param[1]), atoi(param[2]));
+				t_status(matrix);
 			break;
 			case QUIT:
 			break;	
@@ -216,14 +240,19 @@ int agreeRqst (int sockfd, int opponent )
 ** code: message code (110 or 220)
 ** matrix: game matrix
 ** sockfd: server socket descriptor */ 
-void beginGame(int code, int *matrix[], int sockfd){
-
+void beginGame(int code, int matrix[3][3], int sockfd){
+ 	/*
  	int row1[]={0,0,0};
  	int row2[]={0,0,0};
  	int row3[]={0,0,0};
 	matrix[0]=row1;
  	matrix[1]=row2;
  	matrix[2]=row3;
+ 	*/
+ 	int i, j;
+	for (i=0;i<3;i++)
+		for (j=0;j<3;j++)
+			matrix[i][j] = 0;
 	int k;
 	if (code == 220)
 	{	
@@ -241,8 +270,9 @@ void beginGame(int code, int *matrix[], int sockfd){
 	}
 }
 
-/* Control and update the game matrix with the specified coords */
-int pushCoord(int *matrix[], int my_id, int sockfd)
+/* Control and update the game matrix with the specified coords 
+** sockfd: server socket descriptor */
+int pushCoord(int matrix[3][3], int my_id, int sockfd)
 {
 	char temp[MAXLINE];
 	memset(temp, '\0', MAXLINE);
@@ -256,22 +286,21 @@ int pushCoord(int *matrix[], int my_id, int sockfd)
 	{
 		printf("\nPlease insert coordinates: ");
 		fgetsn(temp);
-	}
-	
+	} 
 	if ( ( (y=control_coord(n_coord[0]))>=0 ) && ( (x=control_coord(n_coord[1]))>=0 ) )
 	{
+	/*
 		if ( t_mossa(matrix, y, x, my_id) == MOSSA_NON_VALIDA)
 		{	
 			printf("exception!!");
 			return (-1);	
 		}
 		else
-		{
+		{ */
+			/* Send the coordinates */
 			snprintf(message, sizeof(message), "PUSH %d %d NULL\r\n",y, x);
 			Write(sockfd, message, strlen(message));
-			t_status(matrix);
 			return (1);
-		}
 	}
 	else 
 		return (-1);
@@ -284,7 +313,7 @@ int pushCoord(int *matrix[], int my_id, int sockfd)
 ** sockfd: server socket descriptor 
 ** buff: string received by client 
 ** game: game matrix */
-int clientMessagemng (char* buff, int *game[], int sockfd)
+int clientMessagemng (char* buff, int matrix[3][3], int sockfd)
 {
 	int n,k;
 	char * param [10];
@@ -317,22 +346,37 @@ int clientMessagemng (char* buff, int *game[], int sockfd)
 			case USOK:
 				printf("USOK reply received\n");
 				setMyid (atoi (param[2]));
-				beginGame(atoi(param[1]), game, sockfd);
+				printf("my_id: %d\n", my_id);
+				beginGame(atoi(param[1]), matrix, sockfd);
 				//t_status (game);
 			break;
 			case RUSR:
+				printf("RUSR received\n");
 				agreeRqst( sockfd, atoi(param[1]) );
 			break;
 			case PUSH:
 				y   =  atoi(param[1]);
 				x   =  atoi(param[2]);
 				opp =  atoi(param[3]);
-				printf("%d, %d\n",y,x ,opp);
-				t_mossa(game, x, y, opp);
-				t_status (game);
-				k = pushCoord (game, my_id, sockfd);
+				printf("y: %d x: %d opp:%d\n",y,x ,opp);
+				updateMatrix(matrix, x, y, opp);
+				t_status (matrix);
+				k = pushCoord (matrix, my_id, sockfd);
 				while (k < 0)
-					k=pushCoord (game, my_id, sockfd);
+					k = pushCoord (matrix, my_id, sockfd);
+			break;
+			case MVOK:
+				printf("MVOK received\n");
+				y = atoi(param[1]);
+				x = atoi(param[2]);
+				updateMatrix(matrix, y, x, -1);
+			break;
+			case MVER:
+				printf("MVER received\n");
+				printf("\nBad move, retry another one\n");
+				k = pushCoord (matrix, my_id, sockfd);
+				while (k < 0)
+					k=pushCoord (matrix, my_id, sockfd);
 			break;
 			default: 
 				printf("Unknown message\n");
@@ -358,6 +402,7 @@ int selectPlayer(int sockfd)
 	Write(sockfd, message, strlen(message));
 }
 
+/* user menu */
 int chooseOption(int sockfd)
 {
 	char choice[3];
@@ -383,13 +428,26 @@ int chooseOption(int sockfd)
 }
 
 /* Sending coord to server 
-** me: client sock descriptor
+** me: client socket descriptor
 ** sockfd: server socket descriptor
-** x, y: coordinates */
-void sendCoord (int me, int sockfd, int y, int x)
+** x, y: coordinates 
+int sendCoord (int me, int sockfd, int y, int x)
 {
 	char message[MAXLINE];
 	memset(message, '\0', MAXLINE);
-	snprintf(message, sizeof(message), "PUSH %d %d %d\r\n",y, x, me);
+	printf("sendCoord: y:%d, x:%d, sockfd:%d\n", y, x, sockfd);
+	snprintf(message, sizeof(message), "PUSH %d %d %d\r\n",y, x);
 	Write(sockfd, message, strlen(message));
+}
+*/
+/* update game matrix after a good move */
+int updateMatrix(int matrix[3][3], int y, int x, int opp)
+{
+	printf("update game matrix -> y:%d x:%d\n, opp:%d\n", y, x, opp);
+	if (opp == -1) /* sent move case */
+		matrix[x][y] = my_id;
+	else /* received move case */
+		matrix[x][y] = opp;
+	printf("Game matrix updated\n");
+	t_status(matrix);
 }

@@ -5,5 +5,5 @@
 
 
 
-int t_mossa (int **,int,int,int);
+//int t_mossa (int *,int,int,int);
 

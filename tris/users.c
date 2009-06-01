@@ -124,6 +124,7 @@ int userConfirm (t_user *players, int sockfd, int me)
 	/* set the player's seed */
 	players[me].seed = 0;
 	players[sockfd].seed = 1;
+	printf("userConfirm\nplayers[me].opp:%d  players[sockf].opp:%d\n", players[me].opp,players[sockfd].opp);
 	/* Invia messaggi ai due giocatori in base a chi deve iniziare prima */
 	if ( (k = starterUser( sockfd, me ) ) == me )
 	{

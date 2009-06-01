@@ -13,6 +13,8 @@
 #define RUSR						8				/* scelta del giocatore */
 #define USOK						9				/* user choice ok */
 #define USNO					  10
+#define MVOK						11 			/* user move ok */
+#define MVER						12			/* user move error */
 
 #define MOSSA_VALIDA     1
 #define MOSSA_NON_VALIDA 0

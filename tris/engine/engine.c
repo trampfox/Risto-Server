@@ -2,7 +2,7 @@
 //#include "users.c"
 
    
-  int t_mossa(int *matrix[],int x, int y,int player){
+  int t_mossa(int matrix[3][3],int x, int y,int player){
     if ((x>=0)&&(y<=2)){
       if (matrix[x][y] == 0){
 				matrix[x][y] = player;
@@ -22,11 +22,11 @@
     }
   }
 
-  void t_status(int *game[]){
+  void t_status(int game[3][3]){
       printf("%d %d %d\n%d %d %d\n%d %d %d\n",game[0][0],game[0][1],game[0][2],game[1][0],game[1][1],game[1][2],game[2][0],game[2][1],game[2][2]);
   }
     
-  int t_victory(int *game[]){
+  int t_victory(int game[3][3]){
     /*
       Testa la matrice per decretare un vincitore:
       Restituisce l' id del vincitore, -1 in caso contrario.
@@ -51,7 +51,7 @@ int control_coord(char* el){
   if (isdigit(el[0])){
     k = atoi(el);
     if ((k<0)||(k>2)){
-      printf("insert coord between 0 e 2!\n");
+      printf("Insert coord between 0 e 2!\n");
       return -1;
     }
     else
