@@ -2,19 +2,17 @@
 //#include "users.c"
 
    
-
-
-  int t_mossa(int*game[],int x, int y,int player){
+  int t_mossa(int *matrix[],int x, int y,int player){
     if ((x>=0)&&(y<=2)){
-      if (game[x][y]==0){
-	game[x][y]=player;
-	return MOSSA_VALIDA;
+      if (matrix[x][y] == 0){
+				matrix[x][y] = player;
+				return MOSSA_VALIDA;
       }
     }
     return MOSSA_NON_VALIDA;
   }
   
-  
+/* init the seed of the player */
   char func(int i){
     char seme[]="XO"; 
     if (i==0)
@@ -25,7 +23,7 @@
   }
 
   void t_status(int *game[]){
-      printf("%c %c %c\n%c %c %c\n%c %c %c\n",func(game[0][0]),func(game[0][1]),func(game[0][2]),func(game[1][0]),func(game[1][1]),func(game[1][2]),func(game[2][0]),func(game[2][1]),func(game[2][2]));
+      printf("%d %d %d\n%d %d %d\n%d %d %d\n",game[0][0],game[0][1],game[0][2],game[1][0],game[1][1],game[1][2],game[2][0],game[2][1],game[2][2]);
   }
     
   int t_victory(int *game[]){
@@ -47,10 +45,11 @@
     else return -1;
   }
 
+/* Control the input */
 int control_coord(char* el){
   int k;
   if (isdigit(el[0])){
-    k=atoi(el);
+    k = atoi(el);
     if ((k<0)||(k>2)){
       printf("insert coord between 0 e 2!\n");
       return -1;

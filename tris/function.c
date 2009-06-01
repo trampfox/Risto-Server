@@ -1,27 +1,8 @@
 #include	"lib/basic.h"
 #include 	"users.c"
 #include	"engine/engine.c"
-/*Note USNO non è ancora stato implementato*/
-/* costanti protocollo tris */
-#define HELO						0				/* authentication message */
-#define SROK						1				/* authentication ok */
-#define ERRR						2				/* generic error*/
-#define LIST						3				/* request list of available users */
-#define PUSH						4				/* messaggio di invio coordinate giuoco */
-#define RQOK						5				/* richiesta ok */
-#define	QUIT						6				/* richiesta chiusura */
-#define RLIS						7				/* invia elenco degli utenti disponibili*/
-#define RUSR						8				/* scelta del giocatore */
-#define USOK						9				/* user choice ok */
-#define USNO					       10
-/* Error code
+#include	"lib/protocol.h"
 
-** 110 -> start the game
-** 220 -> wait the first push
-** 330 -> request play against himself  
-** 440 -> nickname already exixts
-** 550 -> request user id doesn't exixt
-*/
 /* funzioni principali per il gioco del tris
  * Parte di autenticazione
  * Parte del parsing del messaggio (comune client e server)
@@ -41,11 +22,6 @@ char* fgetsn (char * str){
   return p;
 }
 
-void setMyid(int id)
-{
-	my_id = id;
-	return;
-}
 /*Splitta una stringa in n parti e ne ritorna il numero*/
 int split_string(char* input,char sep,char **out)
 {
@@ -62,30 +38,6 @@ int split_string(char* input,char sep,char **out)
   }
   return i;
 }
-
-/***************************** 
-			Server function
-******************************/
-
-int serverAuth( int sockfd, int ret )
-{
-	char message[MAXLINE], type[5];
-	
-	/* type identifica il tipo di messaggio da inviare. In questo caso
-	 * e' uguale a zero -> autenticazione */
-	if (ret == SROK)
- 		sprintf(type,"SROK\0");
-	else
-		sprintf(type,"ERRR\0");
-	
-	memset(message, '\0', MAXLINE);
-	snprintf(message, sizeof(message), "%s 440 NULL NULL\r\n", type);
-
-	Write(sockfd, message, strlen(message));
-	return 0;
-}
-
-
 
 /* ritorna il codice del messaggio passato come argomento 
  * il tipo del messaggio e' dato dal primo carattere (numerico) */
@@ -114,25 +66,47 @@ int parseMessage(char *buff, char **param)
 		return -1;
 }
 
-
 /***************************** 
-		Client & server function
+			Server function
 ******************************/
 
-/* server message management 
-** sockfd: client socket file descriptor */
 
-void sendCoord (int me, int sockfd, int y, int x)
+int serverAuth( int sockfd, int ret )
 {
-	char message[MAXLINE];
+	char message[MAXLINE], type[5];
+	
+	/* type identifica il tipo di messaggio da inviare. In questo caso
+	 * e' uguale a zero -> autenticazione */
+	if (ret == SROK)
+ 		sprintf(type,"SROK\0");
+	else
+		sprintf(type,"ERRR\0");
+	
 	memset(message, '\0', MAXLINE);
-	snprintf(message, sizeof(message), "PUSH %d %d %d\r\n",y, x, me);
+	snprintf(message, sizeof(message), "%s 440 NULL NULL\r\n", type);
+
 	Write(sockfd, message, strlen(message));
+	return 0;
 }
 
+/* initialize a copy of game matrix on server used to control the player's shoots
+** matrix: game matrix */
+int initGameMatrix(int *matrix[])
+{
+	int row1[]={0,0,0};
+ 	int row2[]={0,0,0};
+ 	int row3[]={0,0,0};
+	matrix[0]=row1;
+ 	matrix[1]=row2;
+ 	matrix[2]=row3;
+ 	printf("Game matrix\n");
+	t_status (matrix);
+	return 1;
+}
 
-
-int messagemng(char* buff, t_user* players, int sockfd)
+/* Server message management
+ * sockfd: client socket descriptor that has sent the message */
+int messagemng(char* buff, t_user* players, int *matrix[], int sockfd)
 {
 	int n,k;
 	char* param [10];
@@ -144,14 +118,15 @@ int messagemng(char* buff, t_user* players, int sockfd)
 			case HELO:
 				if  ((k = addUser(param[1],players,sockfd)) == 0) 
 					serverAuth( sockfd, SROK );
-				else 	serverAuth( sockfd, ERRR );
+				else serverAuth( sockfd, ERRR );
 			break;
 			case LIST:
 				/* prepare and send the list of all available users */
 				prepareList(players, list, sockfd);
 			break;
-			case RQOK:
+			case RQOK: /* l'avversario ha accettato */																				
 				userConfirm( players, atoi(param[1]), sockfd );
+				initGameMatrix(matrix);
 			break;
 			case RUSR:
 				printf("RUSR request received\n");
@@ -169,9 +144,15 @@ int messagemng(char* buff, t_user* players, int sockfd)
 	return (0);
 }
 
-/**************************************** 
-			Client function *
-*****************************************/
+/***************************** 
+			Client function
+******************************/
+
+void setMyid(int id)
+{
+	my_id = id;
+	return;
+}
 
 /* funzione per l'autenticazione del giocatore 
 ** sockfd: server socket file descriptor */
@@ -205,13 +186,16 @@ int askList(int sockfd)
 
 }
 
+/* Gestisce messaggi di tipo RUSR.
+ * Un giocatore riceve una richiesta di gioco da parte di un altro giocatore
+ * sockfd: socket descriptor del server
+ * opponent: id dell'avversario */
 int agreeRqst (int sockfd, int opponent )
 {
-
 	char message [MAXLINE];
 	memset(message, '\0', MAXLINE);
 	char decision[MAXLINE];
-	printf("Player %d would play with you, agree? y/n\n", opponent);
+	printf("Player %d would like to play with you, do you agree? (y/n)\n", opponent);
 	fgetsn(decision);
 	while ( (decision[0]!='y') && (decision[0]!='n') )
 	{
@@ -227,7 +211,38 @@ int agreeRqst (int sockfd, int opponent )
 	
 }
 
-int pushCoord(int*matrice[], int seme, int sockfd)
+/* Begin the game after a USOK message. It prepares the game matrix and calls 
+** pushCoord function
+** code: message code (110 or 220)
+** matrix: game matrix
+** sockfd: server socket descriptor */ 
+void beginGame(int code, int *matrix[], int sockfd){
+
+ 	int row1[]={0,0,0};
+ 	int row2[]={0,0,0};
+ 	int row3[]={0,0,0};
+	matrix[0]=row1;
+ 	matrix[1]=row2;
+ 	matrix[2]=row3;
+	int k;
+	if (code == 220)
+	{	
+		printf("\nWaiting for the first opponent shoot!\n");
+		return;
+	}
+	else if (code == 110)
+	{	
+		/*show the first screen game  */
+		t_status (matrix);
+		k = pushCoord(matrix, my_id, sockfd);
+		while (k < 0)
+			k = pushCoord(matrix, my_id, sockfd);
+		return;
+	}
+}
+
+/* Control and update the game matrix with the specified coords */
+int pushCoord(int *matrix[], int my_id, int sockfd)
 {
 	char temp[MAXLINE];
 	memset(temp, '\0', MAXLINE);
@@ -245,14 +260,16 @@ int pushCoord(int*matrice[], int seme, int sockfd)
 	
 	if ( ( (y=control_coord(n_coord[0]))>=0 ) && ( (x=control_coord(n_coord[1]))>=0 ) )
 	{
-		
-		if ( t_mossa(matrice, y, x, seme) == MOSSA_NON_VALIDA)
-		{	printf("exception!!");
+		if ( t_mossa(matrix, y, x, my_id) == MOSSA_NON_VALIDA)
+		{	
+			printf("exception!!");
 			return (-1);	
-		}else
+		}
+		else
 		{
-			snprintf(message, sizeof(message), "PUSH %d %d NULL\r\n",x, y);
+			snprintf(message, sizeof(message), "PUSH %d %d NULL\r\n",y, x);
 			Write(sockfd, message, strlen(message));
+			t_status(matrix);
 			return (1);
 		}
 	}
@@ -262,37 +279,11 @@ int pushCoord(int*matrice[], int seme, int sockfd)
 }
 
 
-
-void beginGame(int code, int *matrice[], int sockfd){
-
-     	int row1[]={0,0,0};
-     	int row2[]={0,0,0};
-     	int row3[]={0,0,0};
-	matrice[0]=row1;
-     	matrice[1]=row2;
-     	matrice[2]=row3;
-	int k;
-	if (code == 220)
-	{	printf("Wait the first shoot!\n");
-		return;
-	}
-	else if (code == 110)
-	{	
-		/*show the first screen game  */
-		t_status (matrice);
-		k = pushCoord(matrice, my_id, sockfd);
-		while (k < 0)
-			k = pushCoord(matrice, my_id, sockfd);
-		return;
-	}
-}
-
-
-
 /* Client message management. Find the type of messagge with parseMessage
 ** and then call the relative function 
-** sockfd: server socket file descriptor 
-** buff: string received by client */
+** sockfd: server socket descriptor 
+** buff: string received by client 
+** game: game matrix */
 int clientMessagemng (char* buff, int *game[], int sockfd)
 {
 	int n,k;
@@ -330,7 +321,6 @@ int clientMessagemng (char* buff, int *game[], int sockfd)
 				//t_status (game);
 			break;
 			case RUSR:
-				
 				agreeRqst( sockfd, atoi(param[1]) );
 			break;
 			case PUSH:
@@ -338,9 +328,9 @@ int clientMessagemng (char* buff, int *game[], int sockfd)
 				x   =  atoi(param[2]);
 				opp =  atoi(param[3]);
 				printf("%d, %d\n",y,x ,opp);
-				//t_mossa(game, x, y, opp);
-				//t_status (game);
-				k=pushCoord (game, my_id, sockfd);
+				t_mossa(game, x, y, opp);
+				t_status (game);
+				k = pushCoord (game, my_id, sockfd);
 				while (k < 0)
 					k=pushCoord (game, my_id, sockfd);
 			break;
@@ -390,4 +380,16 @@ int chooseOption(int sockfd)
 		default:
 		break;
 	}	
+}
+
+/* Sending coord to server 
+** me: client sock descriptor
+** sockfd: server socket descriptor
+** x, y: coordinates */
+void sendCoord (int me, int sockfd, int y, int x)
+{
+	char message[MAXLINE];
+	memset(message, '\0', MAXLINE);
+	snprintf(message, sizeof(message), "PUSH %d %d %d\r\n",y, x, me);
+	Write(sockfd, message, strlen(message));
 }

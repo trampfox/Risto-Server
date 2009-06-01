@@ -5,6 +5,7 @@
 
 typedef struct u{
   int id;		//id corrisponde al socket descriptor assegnatogli dal server
+  int seed; // random seed of user. Used for the representation of game matrix
   int state;		//sato dell'utente: BUSY FREE (AWAY?)
   int opp;
   char nickname[MAXLINE];

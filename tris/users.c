@@ -95,6 +95,7 @@ int controlUser(t_user *players, int sockfd, char *id)
 	}
 }
 
+/* Sceglie in modo casuale l'utente che deve iniziare la partita */
 int starterUser(int a, int b)
 {
 	int v [2];
@@ -120,17 +121,19 @@ int userConfirm (t_user *players, int sockfd, int me)
 	players[sockfd].state = BUSY;
 	players[me].opp = sockfd;
 	players[sockfd].opp = me;
+	/* set the player's seed */
+	players[me].seed = 0;
+	players[sockfd].seed = 1;
+	/* Invia messaggi ai due giocatori in base a chi deve iniziare prima */
 	if ( (k = starterUser( sockfd, me ) ) == me )
 	{
-		
 		snprintf(message, sizeof(message),   "USOK 110 %d NULL\r\n",me);
 		snprintf(message1, sizeof(message1), "USOK 220 %d NULL\r\n",sockfd);
 		Write(me, message, strlen(message));
 		Write(sockfd, message1, strlen(message1));
 	}
 	else if ( k == sockfd )
-	{
-		
+	{	
 		snprintf(message, sizeof(message),   "USOK 110 %d NULL\r\n",sockfd);
 		snprintf(message1, sizeof(message1), "USOK 220 %d NULL\r\n",me);
 		Write(sockfd, message, strlen(message));
