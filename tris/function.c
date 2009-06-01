@@ -5,7 +5,7 @@
 =======
 #include	"engine/engine.c"
 /*Note USNO non è ancora stato implementato*/
->>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/function.c
+
 /* costanti protocollo tris */
 #define HELO						0				/* authentication message */
 #define SROK						1				/* authentication ok */
@@ -17,13 +17,7 @@
 #define RLIS						7				/* invia elenco degli utenti disponibili*/
 #define RUSR						8				/* scelta del giocatore */
 #define USOK						9				/* user choice ok */
-<<<<<<< HEAD:tris/function.c
-/* Error code
-** 330 -> request play against himself  
-** 440 -> nickname already exixts
-** 550 -> request user id doesn't exixt
-=======
-#define USNO					       10
+#define USNO					  10
 /* Error code
 
 ** USOK code
@@ -34,8 +28,8 @@
 ** 330 -> request play against himself  
 ** 440 -> nickname already exixts
 ** 550 -> request user id doesn't exit
->>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/function.c
 */
+
 /* funzioni principali per il gioco del tris
  * Parte di autenticazione
  * Parte del parsing del messaggio (comune client e server)
@@ -108,7 +102,6 @@ messageType(char *message)
 	return(atoi(&message[0]));
 }
 
-<<<<<<< HEAD:tris/function.c
 char* fgetsn (char * str){
   char* p;
   //Devo eliminare lo \n, è importantissimo, altrimenti si creerebbe \n\r\n 
@@ -170,8 +163,6 @@ messageType(char *message)
 	return(atoi(&message[0]));
 }
 
-=======
->>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/function.c
 int parseMessage(char *buff, char **param)
 {
 	
@@ -186,10 +177,7 @@ int parseMessage(char *buff, char **param)
 		if (strcmp(param[0], "RUSR") == 0) return RUSR;
 		if (strcmp(param[0], "USOK") == 0) return USOK;
 		if (strcmp(param[0], "QUIT") == 0) return QUIT;
-<<<<<<< HEAD:tris/function.c
-=======
 		if (strcmp(param[0], "PUSH") == 0) return PUSH;
->>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/function.c
 	}
 	else 
 		return -1;
@@ -202,9 +190,6 @@ int parseMessage(char *buff, char **param)
 
 /* server message management 
 ** sockfd: client socket file descriptor */
-<<<<<<< HEAD:tris/function.c
-=======
-
 void sendCoord (int me, int sockfd, int y, int x)
 {
 	char message[MAXLINE];
@@ -213,9 +198,6 @@ void sendCoord (int me, int sockfd, int y, int x)
 	Write(sockfd, message, strlen(message));
 }
 
-
-
->>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/function.c
 int messagemng(char* buff, t_user* players, int sockfd)
 {
 	int n,k;
@@ -235,22 +217,16 @@ int messagemng(char* buff, t_user* players, int sockfd)
 				prepareList(players, list, sockfd);
 			break;
 			case RQOK:
-<<<<<<< HEAD:tris/function.c
-=======
 				userConfirm( players, atoi(param[1]), sockfd );
->>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/function.c
 			break;
 			case RUSR:
 				printf("RUSR request received\n");
 				/* control the user request, param[1] contains the user ID */
 				controlUser(players, sockfd, param[1]);
 			break;
-<<<<<<< HEAD:tris/function.c
-=======
 			case PUSH:
 				sendCoord(sockfd, players[sockfd].opp, atoi(param[1]), atoi(param[2]));
 			break;
->>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/function.c
 			case QUIT:
 			break;	
 		}		
@@ -259,15 +235,9 @@ int messagemng(char* buff, t_user* players, int sockfd)
 	return (0);
 }
 
-<<<<<<< HEAD:tris/function.c
-/***************************** 
-			Client function
-******************************/
-=======
 /**************************************** 
 			Client function *
 *****************************************/
->>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/function.c
 
 /* funzione per l'autenticazione del giocatore 
 ** sockfd: server socket file descriptor */
@@ -301,16 +271,6 @@ int askList(int sockfd)
 
 }
 
-<<<<<<< HEAD:tris/function.c
-/* Client message management. Find the type of messagge with parseMessage
-** and then call the relative function 
-** sockfd: server socket file descriptor 
-** buff: string received by client */
-int clientMessagemng (char* buff, int sockfd)
-{
-	int n,k;
-	char * param [10];
-=======
 int agreeRqst (int sockfd, int opponent )
 {
 
@@ -404,8 +364,7 @@ int clientMessagemng (char* buff, int *game[], int sockfd)
 	int n,k;
 	char * param [10];
 	int x,y,opp;
-	
->>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/function.c
+
 	//printf("call parse message\n");
 	if( (n = parseMessage(buff, param)) >= 0 ){
 		//printf("parseMessage return value: %d\n", n);
@@ -432,9 +391,7 @@ int clientMessagemng (char* buff, int *game[], int sockfd)
 			break;
 			case USOK:
 				printf("USOK reply received\n");
-<<<<<<< HEAD:tris/function.c
 				//beginGame(sockfd);
-=======
 				setMyid (atoi (param[2]));
 				beginGame(atoi(param[1]), game, sockfd);
 				//t_status (game);
@@ -453,7 +410,6 @@ int clientMessagemng (char* buff, int *game[], int sockfd)
 				k=pushCoord (game, my_id, sockfd);
 				while (k < 0)
 					k=pushCoord (game, my_id, sockfd);
->>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/function.c
 			break;
 			default: 
 				printf("Unknown message\n");
