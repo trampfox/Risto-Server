@@ -19,10 +19,7 @@ void close_prog(int status)
 main(int argc, char *argv[])
 {
   int sockfd, n, num, maxfd, r, ntout;
-<<<<<<< HEAD:tris/trisClient.c
-=======
   int *matrice[3];
->>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/trisClient.c
   struct sockaddr_in servaddr;
   char buff[MAXLINE], str[MAXLINE], rcv[MAXLINE];
   struct hostent *he;
@@ -104,11 +101,7 @@ main(int argc, char *argv[])
 		if (FD_ISSET(sockfd, &rset)) {
 			n = Read(sockfd, rcv, MAXLINE-1);
 			/* gestione del messaggio */
-<<<<<<< HEAD:tris/trisClient.c
-			r = clientMessagemng(rcv, sockfd);						
-=======
 			r = clientMessagemng(rcv, matrice, sockfd);						
->>>>>>> 448bc7b29924ba90a86cb5cbff3efceb93bbe415:tris/trisClient.c
 			//printf("echo: %s\n", rcv);
 			//printf("Inserisci la stringa: ");
 			fflush(stdin);

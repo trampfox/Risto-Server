@@ -1,11 +1,7 @@
 #include	"lib/basic.h"
 #include 	"users.c"
-<<<<<<< HEAD:tris/function.c
-
-=======
 #include	"engine/engine.c"
 /*Note USNO non è ancora stato implementato*/
-
 /* costanti protocollo tris */
 #define HELO						0				/* authentication message */
 #define SROK						1				/* authentication ok */
@@ -17,19 +13,15 @@
 #define RLIS						7				/* invia elenco degli utenti disponibili*/
 #define RUSR						8				/* scelta del giocatore */
 #define USOK						9				/* user choice ok */
-#define USNO					  10
+#define USNO					       10
 /* Error code
 
-** USOK code
 ** 110 -> start the game
 ** 220 -> wait the first push
-
-** ERRR code
 ** 330 -> request play against himself  
 ** 440 -> nickname already exixts
-** 550 -> request user id doesn't exit
+** 550 -> request user id doesn't exixt
 */
-
 /* funzioni principali per il gioco del tris
  * Parte di autenticazione
  * Parte del parsing del messaggio (comune client e server)
@@ -54,67 +46,6 @@ void setMyid(int id)
 	my_id = id;
 	return;
 }
-/*Splitta una stringa in n parti e ne ritorna il numero*/
-int split_string(char* input,char sep,char **out)
-{
-  int i=0;
-
-  char* p=NULL;
-  char* ss=NULL;
-	// Bisogna passare i parametri senza /0 altrimenti ci sono problemi nel parsing
-  for(p = strtok_r(input,&sep,&ss),i=0;p!=NULL;p=strtok_r(NULL,&sep,&ss),i++)
-  {
-    out[i]=(char*)malloc(MAXLINE);
-    memset (out[i],'\0',MAXLINE);
-    sprintf(out[i],"%s",p);
-  }
-  return i;
-}
-
-/***************************** 
-			Server function
-******************************/
-
-int serverAuth( int sockfd, int ret )
-{
-	char message[MAXLINE], type[5];
-	
-	/* type identifica il tipo di messaggio da inviare. In questo caso
-	 * e' uguale a zero -> autenticazione */
-	if (ret == SROK)
- 		sprintf(type,"SROK\0");
-	else
-		sprintf(type,"ERRR\0");
-	
-	memset(message, '\0', MAXLINE);
-	snprintf(message, sizeof(message), "%s 440 NULL NULL\r\n", type);
-
-	Write(sockfd, message, strlen(message));
-	return 0;
-}
-
-
-
-/* ritorna il codice del messaggio passato come argomento 
- * il tipo del messaggio e' dato dal primo carattere (numerico) */
-messageType(char *message)
-{
-	return(atoi(&message[0]));
-}
-
-char* fgetsn (char * str){
-  char* p;
-  //Devo eliminare lo \n, è importantissimo, altrimenti si creerebbe \n\r\n 
-  //la readline lato server, si fermerebbe al 1° \n e si metterebbe in attesa 
-  //per \r\n, crando confusione...
-
-  p=fgets(str,MAXLINE,stdin);
-  str[strlen(str)-1]='\0';
-  fflush (stdout);
-  fflush(stdin);
-  return p;
-}
-
 /*Splitta una stringa in n parti e ne ritorna il numero*/
 int split_string(char* input,char sep,char **out)
 {
@@ -190,6 +121,7 @@ int parseMessage(char *buff, char **param)
 
 /* server message management 
 ** sockfd: client socket file descriptor */
+
 void sendCoord (int me, int sockfd, int y, int x)
 {
 	char message[MAXLINE];
@@ -197,6 +129,8 @@ void sendCoord (int me, int sockfd, int y, int x)
 	snprintf(message, sizeof(message), "PUSH %d %d %d\r\n",y, x, me);
 	Write(sockfd, message, strlen(message));
 }
+
+
 
 int messagemng(char* buff, t_user* players, int sockfd)
 {
@@ -277,7 +211,7 @@ int agreeRqst (int sockfd, int opponent )
 	char message [MAXLINE];
 	memset(message, '\0', MAXLINE);
 	char decision[MAXLINE];
-	printf("Player %d would like to play with you, agree? y/n\n", opponent);
+	printf("Player %d would play with you, agree? y/n\n", opponent);
 	fgetsn(decision);
 	while ( (decision[0]!='y') && (decision[0]!='n') )
 	{
@@ -364,7 +298,7 @@ int clientMessagemng (char* buff, int *game[], int sockfd)
 	int n,k;
 	char * param [10];
 	int x,y,opp;
-
+	
 	//printf("call parse message\n");
 	if( (n = parseMessage(buff, param)) >= 0 ){
 		//printf("parseMessage return value: %d\n", n);
@@ -391,7 +325,6 @@ int clientMessagemng (char* buff, int *game[], int sockfd)
 			break;
 			case USOK:
 				printf("USOK reply received\n");
-				//beginGame(sockfd);
 				setMyid (atoi (param[2]));
 				beginGame(atoi(param[1]), game, sockfd);
 				//t_status (game);
