@@ -23,7 +23,7 @@
   }
 
   void t_status(int game[3][3]){
-      printf("%d %d %d\n%d %d %d\n%d %d %d\n",game[0][0],game[0][1],game[0][2],game[1][0],game[1][1],game[1][2],game[2][0],game[2][1],game[2][2]);
+      printf("%d %d %d\n%d %d %d\n%d %d %d\n\n",game[0][0],game[0][1],game[0][2],game[1][0],game[1][1],game[1][2],game[2][0],game[2][1],game[2][2]);
   }
     
   int t_victory(int game[3][3]){

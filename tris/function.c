@@ -122,6 +122,8 @@ int controlMove(int matrix[3][3], t_user* players, int y, int x, int player_id)
 		memset(message, '\0', MAXLINE);
 		snprintf(message, sizeof(message), "PUSH %d %d %d\r\n", y, x, player_id);
 		Write(players[player_id].opp, message, strlen(message));
+		/* update server matrix with client id */
+		updateMatrix(matrix, y, x, player_id);
 }
 
 /* Server message management
@@ -241,14 +243,6 @@ int agreeRqst (int sockfd, int opponent )
 ** matrix: game matrix
 ** sockfd: server socket descriptor */ 
 void beginGame(int code, int matrix[3][3], int sockfd){
- 	/*
- 	int row1[]={0,0,0};
- 	int row2[]={0,0,0};
- 	int row3[]={0,0,0};
-	matrix[0]=row1;
- 	matrix[1]=row2;
- 	matrix[2]=row3;
- 	*/
  	int i, j;
 	for (i=0;i<3;i++)
 		for (j=0;j<3;j++)
@@ -360,7 +354,6 @@ int clientMessagemng (char* buff, int matrix[3][3], int sockfd)
 				opp =  atoi(param[3]);
 				printf("y: %d x: %d opp:%d\n",y,x ,opp);
 				updateMatrix(matrix, x, y, opp);
-				t_status (matrix);
 				k = pushCoord (matrix, my_id, sockfd);
 				while (k < 0)
 					k = pushCoord (matrix, my_id, sockfd);
@@ -370,6 +363,7 @@ int clientMessagemng (char* buff, int matrix[3][3], int sockfd)
 				y = atoi(param[1]);
 				x = atoi(param[2]);
 				updateMatrix(matrix, y, x, -1);
+				printf("Waiting for next move\n");
 			break;
 			case MVER:
 				printf("MVER received\n");
@@ -400,6 +394,7 @@ int selectPlayer(int sockfd)
 	memset(message, '\0', MAXLINE);
 	snprintf(message, sizeof(message), "RUSR %s NULL NULL\r\n", id);
 	Write(sockfd, message, strlen(message));
+	printf("Request sent. Waiting for response...\n")
 }
 
 /* user menu */
